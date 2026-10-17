@@ -1,0 +1,6 @@
+/* 皮影剧场 · 本地艺术字体（按需子集，完全离线） */
+@font-face{font-family:'PiyingBrush';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/PiyingBrush-400.woff2') format('woff2');}
+@font-face{font-family:'PiyingHei';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/PiyingHei-400.woff2') format('woff2');}
+@font-face{font-family:'PiyingTitle';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/PiyingTitle-400.woff2') format('woff2');}
+@font-face{font-family:'PiyingSong';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/PiyingSong-400.woff2') format('woff2');}
+@font-face{font-family:'PiyingSong';font-style:normal;font-weight:700;font-display:swap;src:url('../vendor/fonts/PiyingSong-700.woff2') format('woff2');}

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0a07">
+<title>皮影剧场 · 中国非物质文化遗产皮影戏互动体验</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23a5302a'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23f3e8d0' font-family='serif'%3E%E5%BD%B1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+<script>
+/* ============================================================
+   运行环境自检 + file:// 自动接管
+   ------------------------------------------------------------
+   浏览器在 file:// 下禁止 ES 模块 / WebAssembly / fetch，
+   因此双击 index.html 时这里先探测本机 8848 端口的本地服务器：
+
+     · 探测成功 → 立刻把地址从 file://… 换成 http://127.0.0.1:8848/
+     · 探测失败 → 显示引导浮层，并每 2 秒自动重试（服务器一启动就自动进入）
+
+   探测手段用 <img> 而非 fetch：img 不受跨域限制，
+   也不会被 file:// 的 "null" 源拦住。
+   ============================================================ */
+(function () {
+  window.__piyingBooted = false;
+
+  /* —— 自动接管状态 —— */
+  var AUTO = {
+    on: location.protocol === 'file:',   // 仅 file:// 下启用
+    port: 8848,
+    tries: 0,
+    jumped: false,                       // 已成功跳转
+    timer: 0,
+    probeUrl: 'assets/bg/page-bg.jpg',   // 用一张必然存在的图做探针
+  };
+  try {
+    var qp = new URLSearchParams(location.search).get('port');
+    if (qp) AUTO.port = parseInt(qp, 10) || 8848;
+  } catch (e) {}
+  function serverUrl() { return 'http://127.0.0.1:' + AUTO.port + '/'; }
+
+  function setStatus(t) {
+    var el = document.getElementById('diagAuto');
+    if (el) el.textContent = t;
+  }
+
+  function showDiag(reason) {
+    if (window.__piyingBooted || AUTO.jumped) return;
+    var box = document.getElementById('diag');
+    if (!box || box.classList.contains('on')) return;
+    var path = '';
+    try {
+      path = decodeURIComponent(location.pathname).replace(/\/[^\/]*$/, '').replace(/^\//, '');
+      if (location.protocol === 'file:' && /^[a-zA-Z]:/.test(path)) path = path.replace(/\//g, '\\');
+    } catch (e) {}
+    document.getElementById('diagPath').textContent = path || '（项目文件夹）';
+    document.getElementById('diagReason').textContent = reason;
+    box.classList.add('on');
+    var ld = document.getElementById('loading');
+    if (ld) ld.style.display = 'none';
+  }
+
+  /* —— 探测一次：成功/失败各回调一次 —— */
+  function probe(cb) {
+    var done = false;
+    var im = new Image();
+    var t = setTimeout(function () { if (!done) { done = true; cb(false); } }, 1600);
+    im.onload = function () { if (!done) { done = true; clearTimeout(t); cb(true); } };
+    im.onerror = function () { if (!done) { done = true; clearTimeout(t); cb(false); } };
+    im.src = serverUrl() + AUTO.probeUrl + '?probe=' + Date.now();
+  }
+
+  /* —— 自动跳转轮询 —— */
+  function autoTick(first) {
+    if (AUTO.jumped) return;
+    AUTO.tries++;
+    probe(function (ok) {
+      if (ok) {
+        AUTO.jumped = true;
+        clearTimeout(AUTO.timer);
+        setStatus('已找到本地服务器，正在进入 ' + serverUrl() + ' …');
+        var box = document.getElementById('diag');
+        if (box) box.classList.remove('on');
+        var ld = document.getElementById('loading');
+        if (ld) ld.style.display = '';
+        location.replace(serverUrl());
+        return;
+      }
+      if (first) {
+        showDiag('file');
+        setStatus('正在等待本地服务器 ' + serverUrl() + ' …（每 2 秒自动重试）');
+      } else {
+        setStatus('正在等待本地服务器 ' + serverUrl() + ' …（已重试 ' + AUTO.tries + ' 次）');
+      }
+      AUTO.timer = setTimeout(function () { autoTick(false); }, 2000);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (AUTO.on) {
+      setStatus('正在检测本地服务器 ' + serverUrl() + ' …');
+      autoTick(true);
+    }
+  });
+
+  /* 浮层上的两个按钮 */
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('#diagRetry,#diagOpen');
+    if (!b) return;
+    if (b.id === 'diagOpen') { location.href = serverUrl(); return; }
+    clearTimeout(AUTO.timer);
+    AUTO.tries = 0;
+    setStatus('正在检测本地服务器 ' + serverUrl() + ' …');
+    autoTick(false);
+  });
+
+  window.addEventListener('error', function (e) {
+    var t = e && e.target;
+    if (t && t.tagName === 'SCRIPT') showDiag('script');
+  }, true);
+  window.addEventListener('unhandledrejection', function () {
+    if (!window.__piyingBooted) showDiag('reject');
+  });
+  setTimeout(function () {
+    if (!window.__piyingBooted && !AUTO.on) showDiag('timeout');
+  }, 8000);
+
+  /* 复制按钮（file:// 下无剪贴板 API，用 textarea 兜底） */
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-copy],#diagCopy');
+    if (!b) return;
+    var txt = b.id === 'diagCopy'
+      ? (document.getElementById('diagPath').textContent || '')
+      : b.getAttribute('data-copy');
+    if (!txt) return;
+    var done = function () {
+      var old = b.textContent; b.textContent = '已复制 ✓';
+      setTimeout(function () { b.textContent = old; }, 1400);
+    };
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(txt).then(done, function () { fallback(); });
+      } else { fallback(); }
+    } catch (err) { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+  });
+})();
+</script>
+</head>
+<body>
+
+<div class="app">
+  <div class="deck" id="deck" data-index="0">
+
+    <!-- ===================== 页面一 · 封面 ===================== -->
+    <section class="screen" id="scr1">
+      <div class="bg-layer">
+        <img src="assets/bg/page-bg.jpg" alt="">
+      </div>
+      <div class="cover">
+        <div class="cover-inner">
+          <div class="cover-kicker">中国非物质文化遗产 · 皮影戏</div>
+          <h1 class="cover-title" id="coverTitle">皮影剧场</h1>
+          <div class="cover-rule">以手为签 · 以影为戏</div>
+          <button class="btn" id="btnStart">开始创作</button>
+        </div>
+      </div>
+      <div class="seal cover-seal">皮影<br>剧场</div>
+      <div class="hint-scroll"><span>下滑继续</span><i></i></div>
+    </section>
+
+    <!-- ===================== 页面二 · 选择 ===================== -->
+    <section class="screen" id="scr2">
+      <div class="bg-layer">
+        <img src="assets/bg/page-bg.jpg" alt="">
+      </div>
+      <div class="choose">
+        <div class="choose-head">
+          <h2>择 一 幕 而 演</h2>
+          <p>挑一段旧戏，或自铸新影</p>
+        </div>
+        <div class="choose-row">
+          <button class="gcard" id="pickClassic">
+            <div class="art"><img src="assets/stories/霸王别姬.jpg" alt=""></div>
+            <div class="body">
+              <div class="cn">经典剧目</div>
+              <div class="line"></div>
+              <div class="en">CLASSIC REPERTOIRE</div>
+              <div class="desc">霸王别姬 · 三打白骨精 · 新贵妃醉酒<br>梁祝 · 鹊桥相会</div>
+            </div>
+            <span class="cnr-b"></span>
+          </button>
+
+          <button class="gcard" id="pickCustom">
+            <div class="art"><img src="assets/bgs/b08.jpg" alt=""></div>
+            <div class="body">
+              <div class="cn">自定义剧目</div>
+              <div class="line"></div>
+              <div class="en">CUSTOM CAST</div>
+              <div class="desc">自选皮影人物与皮影布景<br>自由搭配，独演一场</div>
+            </div>
+            <span class="cnr-b"></span>
+          </button>
+        </div>
+      </div>
+      <div class="hint-scroll"><span>下滑继续</span><i></i></div>
+    </section>
+
+    <!-- ===================== 页面三 · 剧目 ===================== -->
+    <section class="screen" id="scr3">
+      <div class="bg-layer">
+        <img src="assets/bg/page-bg.jpg" alt="">
+      </div>
+      <div class="workspace">
+        <div class="topbar" id="topbar"></div>
+        <div class="ws-body" id="wsBody"></div>
+      </div>
+    </section>
+
+    <!-- ===================== 页面四 · 演绎 ===================== -->
+    <section class="screen" id="scr4">
+      <div class="stage-page">
+        <img class="sbg" id="stageBg" src="assets/bg/page-bg.jpg" alt="">
+        <canvas id="glCanvas"></canvas>
+        <canvas id="fxCanvas"></canvas>
+        <div class="sglow"></div>
+        <div class="svig"></div>
+
+        <div class="stage-title">
+          <span class="t" id="stageTitle">霸王别姬</span>
+          <span class="m" id="stageMeta">双影同台 · 十指提线</span>
+        </div>
+
+        <!-- 摄像头小窗（左上角，可展开 / 收起） -->
+        <div class="cam" id="cam">
+          <div class="cam-head" id="camHead">
+            <span class="dot" id="camDot"></span>
+            <span class="lbl">实时采集</span>
+            <span class="fold" id="camFold">收起 ▲</span>
+          </div>
+          <div class="cam-body">
+            <video id="camVideo" playsinline muted autoplay></video>
+            <canvas id="camCanvas"></canvas>
+            <div class="cam-hud" id="camHud"></div>
+            <div class="cam-msg" id="camMsg"></div>
+          </div>
+        </div>
+
+        <!-- 右下角结束 -->
+        <div class="end-wrap">
+          <div class="ctrl-tip" id="ctrlTip">
+            五指提线　拇指 · 头　食指 / 中指 · 双臂　无名指 / 小指 · 双腿<br>
+            左右手各领一影　无摄像头时 <kbd>鼠标</kbd> 亦可操影
+          </div>
+          <button class="btn btn-ghost" id="btnEnd">结束演绎</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="dots" id="dots"></nav>
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="box">
+    <div class="t">皮影剧场</div>
+    <div class="b"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ 运行环境提示（仅在直接双击打开 / 载入失败时出现） ============ -->
+<div class="diag" id="diag">
+  <div class="diag-box">
+    <span class="cnr-b"></span>
+    <div class="diag-head">
+      <span class="seal">提示</span>
+      <div>
+        <h2>正在等待「本地服务器」</h2>
+        <p class="why">
+          浏览器安全策略禁止 <code>file://</code> 协议加载 ES 模块与 WebAssembly，
+          因此本项目（含摄像头实时捕捉）必须经本地服务器运行。
+          <b>本页正在后台自动探测 <code>http://127.0.0.1:8848/</code>，一旦服务就绪会自动跳转，无需刷新。</b>
+        </p>
+      </div>
+    </div>
+
+    <div class="diag-auto">
+      <span class="pulse"></span>
+      <span id="diagAuto">正在检测本地服务器…</span>
+      <button type="button" id="diagRetry">立即重试</button>
+      <button type="button" id="diagOpen">直接打开</button>
+    </div>
+
+    <ol class="diag-steps">
+      <li>
+        <b>最简方式 · Windows</b>
+        回到项目文件夹，双击运行 <em>启动.bat</em>
+        <div class="path"><span id="diagPath">（项目文件夹）</span><button type="button" id="diagCopy">复制路径</button></div>
+      </li>
+      <li>
+        <b>命令行方式</b>
+        在项目文件夹里执行以下任意一条：
+        <div class="path"><code>python serve.py</code><button type="button" data-copy="python serve.py">复制</button></div>
+        <div class="path"><code>node serve.mjs</code><button type="button" data-copy="node serve.mjs">复制</button></div>
+      </li>
+      <li>
+        <b>编辑器方式</b>
+        VS Code 安装 <em>Live Server</em> 插件 → 右键 <code>index.html</code> → <em>Open with Live Server</em>
+      </li>
+    </ol>
+
+    <div class="diag-foot">
+      启动成功后浏览器会自动打开 <code>http://127.0.0.1:8848/</code>，
+      进入第四幕「演绎」时请允许摄像头权限。
+      <span class="diag-why">（当前失败原因代码：<span id="diagReason">unknown</span>）</span>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
