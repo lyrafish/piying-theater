@@ -141,7 +141,7 @@ function renderClassic(idx) {
   const spots = POS[story.chars.length] || ['l', 'c', 'r'];
   const actors = story.chars.map((c, i) => {
     const cls = spots[i] || 'r';
-    const mir = (cls === 'r' && story.chars.length === 2) ? ' mirror' : '';
+    const mir = (cls === 'l' && story.chars.length === 2) ? ' mirror' : '';
     return `<img class="actor ${cls}${mir}" src="assets/chars/${c}.png" alt="${c}"
               style="animation-delay:${0.08 * i}s">`;
   }).join('');
