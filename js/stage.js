@@ -55,7 +55,7 @@ export class Stage {
       const L = loaded[i];
       if (!L) continue;
       this.puppets.push(new Puppet(this.glCtx.gl, this.glCtx.prog, this.glCtx.loc, L.img, L.rig, {
-        mirror: i === 0,
+        mirror: i === 1,
         side: L.side,
         warm: 0.40,
       }));
