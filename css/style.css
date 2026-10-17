@@ -382,10 +382,12 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   animation: actorIn .8s cubic-bezier(.2,.9,.3,1.1) backwards;
 }
 @keyframes actorIn { from { opacity: 0; transform: translateY(2rem) scale(.94); } }
+/* 镜像人物入场时保持翻转，避免先正身后突然翻面的跳变 */
+@keyframes actorInMirror { from { opacity: 0; transform: scaleX(-1) translateY(2rem) scale(.94); } }
 .stage .actor.l { left: 6%; }
 .stage .actor.r { right: 6%; }
 .stage .actor.c { left: 50%; transform: translateX(-50%); height: 62%; opacity: .96; }
-.stage .actor.r.mirror { transform: scaleX(-1); }
+.stage .actor.l.mirror { transform: scaleX(-1); animation-name: actorInMirror; }
 .stage .plate {
   position: absolute; left: 50%; transform: translateX(-50%); bottom: .8rem;
   display: flex; align-items: center; gap: .5rem;
